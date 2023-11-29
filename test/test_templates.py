@@ -61,16 +61,15 @@ def test_dataset(dataset):
             builder_instance = get_dataset_builder(dataset_name, subset_name)
             break
         except ConnectionError as e:
-            if tries < max_tries:
-                time.sleep(2)
-                tries += 1
-            else:
+            if tries >= max_tries:
                 raise e
 
+            time.sleep(2)
+            tries += 1
     has_features = builder_instance.info.features is not None
     if has_features:
         features = builder_instance.info.features.keys()
-        features = set([feature.replace("-", "_") for feature in features])
+        features = {feature.replace("-", "_") for feature in features}
 
     # Initializes sets for checking uniqueness among templates
     template_name_set = set()
