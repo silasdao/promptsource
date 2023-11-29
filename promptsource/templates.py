@@ -249,8 +249,7 @@ def most_frequent(items):
         return
     item_counts = Counter(items).most_common()
     max_freq = item_counts[0][1]
-    most_frequent_items = [c[0] for c in item_counts if c[1] == max_freq]
-    return most_frequent_items
+    return [c[0] for c in item_counts if c[1] == max_freq]
 
 
 env.filters["highlight"] = highlight
@@ -352,12 +351,11 @@ class Template(yaml.YAMLObject):
 
         parse = env.parse(jinja)
         variables = meta.find_undeclared_variables(parse)
-        if len(variables) == 0:
-            rtemplate = env.from_string(jinja)
-            rendered_choices = rtemplate.render()
-            return [answer_choice.strip() for answer_choice in rendered_choices.split("|||")]
-        else:
+        if len(variables) != 0:
             return None
+        rtemplate = env.from_string(jinja)
+        rendered_choices = rtemplate.render()
+        return [answer_choice.strip() for answer_choice in rendered_choices.split("|||")]
 
     def apply(self, example, truncate=True, highlight_variables=False):
         """
@@ -401,13 +399,12 @@ class Template(yaml.YAMLObject):
 
     @classmethod
     def _escape_pipe(cls, example):
-        # Replaces any occurrences of the "|||" separator in the example, which
-        # which will be replaced back after splitting
-        protected_example = {
-            key: value.replace("|||", cls.pipe_protector) if isinstance(value, str) else value
+        return {
+            key: value.replace("|||", cls.pipe_protector)
+            if isinstance(value, str)
+            else value
             for key, value in example.items()
         }
-        return protected_example
 
     @classmethod
     def _unescape_pipe(cls, string):

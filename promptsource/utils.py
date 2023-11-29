@@ -37,11 +37,11 @@ def get_dataset_builder(path, conf=None):
     "Get a dataset builder from name and conf."
     module_path = datasets.load.dataset_module_factory(path)
     builder_cls = datasets.load.import_main_class(module_path.module_path, dataset=True)
-    if conf:
-        builder_instance = builder_cls(name=conf, cache_dir=None, hash=module_path.hash)
-    else:
-        builder_instance = builder_cls(cache_dir=None, hash=module_path.hash)
-    return builder_instance
+    return (
+        builder_cls(name=conf, cache_dir=None, hash=module_path.hash)
+        if conf
+        else builder_cls(cache_dir=None, hash=module_path.hash)
+    )
 
 
 def get_dataset(path, conf=None):
@@ -49,10 +49,8 @@ def get_dataset(path, conf=None):
     try:
         return datasets.load_dataset(path, conf)
     except datasets.builder.ManualDownloadError:
-        cache_root_dir = (
-            os.environ["PROMPTSOURCE_MANUAL_DATASET_DIR"]
-            if "PROMPTSOURCE_MANUAL_DATASET_DIR" in os.environ
-            else DEFAULT_PROMPTSOURCE_CACHE_HOME
+        cache_root_dir = os.environ.get(
+            "PROMPTSOURCE_MANUAL_DATASET_DIR", DEFAULT_PROMPTSOURCE_CACHE_HOME
         )
         data_dir = f"{cache_root_dir}/{path}" if conf is None else f"{cache_root_dir}/{path}/{conf}"
         try:
@@ -74,9 +72,7 @@ def get_dataset_confs(path):
     builder_cls = datasets.load.import_main_class(module_path, dataset=True)
     # Instantiate the dataset builder
     confs = builder_cls.BUILDER_CONFIGS
-    if confs and len(confs) > 1:
-        return confs
-    return []
+    return confs if confs and len(confs) > 1 else []
 
 
 def render_features(features):
